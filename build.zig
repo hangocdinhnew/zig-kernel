@@ -40,7 +40,7 @@ pub fn build(b: *std.Build) void {
     iso_step.dependOn(&iso_cmd.step);
 
     const run_iso_cmd = b.addSystemCommand(&.{ "bash", "scripts/run_iso.sh" });
-    iso_cmd.step.dependOn(kernel_step);
+    run_iso_cmd.step.dependOn(kernel_step);
     run_iso_cmd.step.dependOn(iso_step);
     const run_iso_step = b.step("run-iso", "Run ISO file in an emulator");
     run_iso_step.dependOn(&run_iso_cmd.step);
