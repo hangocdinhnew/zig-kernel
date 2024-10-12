@@ -45,6 +45,12 @@ pub fn build(b: *std.Build) void {
     const run_iso_step = b.step("run-iso", "Run ISO file in an emulator");
     run_iso_step.dependOn(&run_iso_cmd.step);
 
+    const run_uefi_cmd = b.addSystemCommand(&.{ "bash", "scripts/run-uefi.sh" });
+    run_uefi_cmd.step.dependOn(kernel_step);
+    run_uefi_cmd.step.dependOn(iso_step);
+    const run_uefi_step = b.step("run-uefi", "Run ISO file in an emulator with UEFI firmware");
+    run_uefi_step.dependOn(&run_uefi_cmd.step);
+
     const clean_cmd = b.addSystemCommand(&.{ "bash", "scripts/clean.sh" });
     const clean_step = b.step("clean", "Remove all generated files");
     clean_step.dependOn(&clean_cmd.step);
