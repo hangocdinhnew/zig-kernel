@@ -56,6 +56,11 @@ pub fn build(b: *std.Build) void {
     const run_iso_step = b.step("run-iso", "Run ISO file in emulator");
     run_iso_step.dependOn(&run_iso_cmd.step);
 
+    const run_uefi_cmd = b.addSystemCommand(&.{ "bash", "scripts/run_uefi.sh" });
+    run_uefi_cmd.step.dependOn(iso_step);
+    const run_uefi_step = b.step("run-uefi", "Run ISO file in emulator with UEFI (add your own OVMF path)");
+    run_uefi_step.dependOn(&run_uefi_cmd.step);
+
     const clean_cmd = b.addSystemCommand(&.{
         "rm",
         "-rf",
