@@ -51,10 +51,10 @@ pub fn build(b: *std.Build) void {
     const iso_step = b.step("iso", "Build an iso file");
     iso_step.dependOn(&iso_cmd.step);
 
-    const run_iso_cmd = b.addSystemCommand(&.{ "bash", "scripts/run_iso.sh" });
-    run_iso_cmd.step.dependOn(iso_step);
-    const run_iso_step = b.step("run-iso", "Run ISO file in emulator");
-    run_iso_step.dependOn(&run_iso_cmd.step);
+    const run_bios_cmd = b.addSystemCommand(&.{ "bash", "scripts/run_bios.sh" });
+    run_bios_cmd.step.dependOn(iso_step);
+    const run_bios_step = b.step("run-bios", "Run ISO file in emulator");
+    run_bios_step.dependOn(&run_bios_cmd.step);
 
     const run_uefi_cmd = b.addSystemCommand(&.{ "bash", "scripts/run_uefi.sh" });
     run_uefi_cmd.step.dependOn(iso_step);
