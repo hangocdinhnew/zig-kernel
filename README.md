@@ -2,7 +2,11 @@
 
 ## Mailing List
 
-The mailing list address is: <zigkernelmaillinglist@groups.io>
+The mailing list address is: <zigkernelmailinglist@googlegroups.com>
+
+Please request to be a member, if you want to contribute, to request, send your GitHub account, so that we can add you to the development branch.
+
+You may not request for upstream permission, only contributors that are in the project long enough, is trusted with upstream permission.
 
 ## Submitting Pull Requests
 
