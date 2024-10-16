@@ -1,84 +1,49 @@
-const fmt = @import("std").fmt;
-const Writer = @import("std").io.Writer;
+const builtin = @import("builtin");
+const limine = @import("limine");
+const std = @import("std");
 
-const VGA_WIDTH = 80;
-const VGA_HEIGHT = 25;
-const VGA_SIZE = VGA_WIDTH * VGA_HEIGHT;
+pub fn print(framebuffer: *limine.Framebuffer, text: []const u8, x: ?u8, y: ?u8) void {
+    // Static cursor position
+    var cursor_x: u64 = x orelse 1;
+    var cursor_y: u64 = y orelse 1;
 
-pub const ConsoleColors = enum(u8) {
-    Black = 0,
-    Blue = 1,
-    Green = 2,
-    Cyan = 3,
-    Red = 4,
-    Magenta = 5,
-    Brown = 6,
-    LightGray = 7,
-    DarkGray = 8,
-    LightBlue = 9,
-    LightGreen = 10,
-    LightCyan = 11,
-    LightRed = 12,
-    LightMagenta = 13,
-    LightBrown = 14,
-    White = 15,
-};
+    const font_width: u64 = 8; // Font width for each character (fixed-size)
+    const font_height: u64 = 16; // Font height for each character (fixed-size)
 
-var row: usize = 0;
-var column: usize = 0;
-var color = vgaEntryColor(ConsoleColors.LightGray, ConsoleColors.Black);
-var buffer = @as([*]volatile u16, @ptrFromInt(0xB8000));
+    for (text) |char| {
+        if (char == '\n') {
+            // Move cursor to the next line on newline character
+            cursor_x = 0;
+            cursor_y += font_height;
+            continue;
+        }
 
-fn vgaEntryColor(fg: ConsoleColors, bg: ConsoleColors) u8 {
-    return @intFromEnum(fg) | (@intFromEnum(bg) << 4);
-}
+        // If we run out of horizontal space, move to the next line
+        if (cursor_x >= framebuffer.width) {
+            cursor_x = 0;
+            cursor_y += font_height;
+        }
 
-fn vgaEntry(uc: u8, new_color: u8) u16 {
-    const c: u16 = new_color;
+        // If we run out of vertical space, stop printing
+        if (cursor_y >= framebuffer.height) {
+            break;
+        }
 
-    return uc | (c << 8);
-}
+        // Render the character here - this is where you'd plug in an actual font rendering system
+        // Instead, we'll just use a simplified placeholder (white block for each character)
 
-pub fn initialize() void {
-    clear();
-}
+        // Pixel offset calculation (assuming a 32-bit color format, 4 bytes per pixel)
+        for (0..font_height) |row| {
+            for (0..font_width) |col| {
+                const pixel_offset = (cursor_y + row) * framebuffer.pitch + (cursor_x + col) * 4;
+                const color_value = 0xFFFFFF; // White color for simplicity
 
-pub fn setColor(new_color: u8) void {
-    color = new_color;
-}
+                // Write the pixel value to the framebuffer (assuming 32-bit color depth)
+                @as(*u32, @ptrCast(@alignCast(framebuffer.address + pixel_offset))).* = color_value;
+            }
+        }
 
-pub fn clear() void {
-    @memset(buffer[0..VGA_SIZE], vgaEntry(' ', color));
-}
-
-pub fn putCharAt(c: u8, new_color: u8, x: usize, y: usize) void {
-    const index = y * VGA_WIDTH + x;
-    buffer[index] = vgaEntry(c, new_color);
-}
-
-pub fn putChar(c: u8) void {
-    putCharAt(c, color, column, row);
-    column += 1;
-    if (column == VGA_WIDTH) {
-        column = 0;
-        row += 1;
-        if (row == VGA_HEIGHT)
-            row = 0;
+        // Move the cursor to the next character's position
+        cursor_x += font_width;
     }
-}
-
-pub fn puts(data: []const u8) void {
-    for (data) |c|
-        putChar(c);
-}
-
-pub const writer = Writer(void, error{}, callback){ .context = {} };
-
-fn callback(_: void, string: []const u8) error{}!usize {
-    puts(string);
-    return string.len;
-}
-
-pub fn printf(comptime format: []const u8, args: anytype) void {
-    fmt.format(writer, format, args) catch unreachable;
 }
