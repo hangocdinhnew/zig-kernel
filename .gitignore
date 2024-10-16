@@ -3,3 +3,8 @@
 **/.zig-cache
 **/zig-cache
 **/*.patch
+out
+zig-out
+.zig-cache
+zig-cache
+*.patch
