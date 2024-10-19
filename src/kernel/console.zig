@@ -1,6 +1,7 @@
 const builtin = @import("builtin");
 const limine = @import("limine");
 const std = @import("std");
+const font = @import("font8x8_basic.zig");
 
 pub fn print(framebuffer: *limine.Framebuffer, text: []const u8, x: ?u8, y: ?u8) void {
     // Static cursor position
@@ -8,7 +9,7 @@ pub fn print(framebuffer: *limine.Framebuffer, text: []const u8, x: ?u8, y: ?u8)
     var cursor_y: u64 = y orelse 1;
 
     const font_width: u64 = 8; // Font width for each character (fixed-size)
-    const font_height: u64 = 16; // Font height for each character (fixed-size)
+    const font_height: u64 = 8; // Adjusted to 8x8 font size
 
     for (text) |char| {
         if (char == '\n') {
@@ -19,27 +20,33 @@ pub fn print(framebuffer: *limine.Framebuffer, text: []const u8, x: ?u8, y: ?u8)
         }
 
         // If we run out of horizontal space, move to the next line
-        if (cursor_x >= framebuffer.width) {
+        if (cursor_x + font_width > framebuffer.width) {
             cursor_x = 0;
             cursor_y += font_height;
         }
 
         // If we run out of vertical space, stop printing
-        if (cursor_y >= framebuffer.height) {
+        if (cursor_y + font_height > framebuffer.height) {
             break;
         }
 
-        // Render the character here - this is where you'd plug in an actual font rendering system
-        // Instead, we'll just use a simplified placeholder (white block for each character)
+        // Get the bitmap for the current character
+        const char_bitmap = font.font8x8_basic[char & 0x7F]; // Masking with 0x7F to handle ASCII characters
 
-        // Pixel offset calculation (assuming a 32-bit color format, 4 bytes per pixel)
+        // Render the character pixel by pixel
         for (0..font_height) |row| {
-            for (0..font_width) |col| {
-                const pixel_offset = (cursor_y + row) * framebuffer.pitch + (cursor_x + col) * 4;
-                const color_value = 0xFFFFFF; // White color for simplicity
+            const row_bits = char_bitmap[row]; // Get the bits for the current row
 
-                // Write the pixel value to the framebuffer (assuming 32-bit color depth)
-                @as(*u32, @ptrCast(@alignCast(framebuffer.address + pixel_offset))).* = color_value;
+            for (0..font_width) |col| {
+                const is_pixel_set = (row_bits >> @as(u3, @intCast(col))) & 1; // Cast col to u3 before shifting
+
+                if (is_pixel_set == 1) {
+                    const pixel_offset = (cursor_y + row) * framebuffer.pitch + (cursor_x + col) * 4;
+                    const color_value = 0xFFFFFF; // White color for simplicity
+
+                    // Write the pixel value to the framebuffer (assuming 32-bit color depth)
+                    @as(*u32, @ptrCast(@alignCast(framebuffer.address + pixel_offset))).* = color_value;
+                }
             }
         }
 
